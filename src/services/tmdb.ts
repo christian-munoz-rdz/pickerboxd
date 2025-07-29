@@ -1,4 +1,4 @@
-import { Movie, MovieResponse, Genre, GenreResponse, WatchProvider, WatchProviderResponse, WatchProvidersListResponse } from '@/types/movie';
+import { MovieResponse, Genre, GenreResponse, WatchProvider, WatchProviderResponse, WatchProvidersListResponse } from '@/types/movie';
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const BASE_URL = import.meta.env.VITE_TMDB_BASE_URL || 'https://api.themoviedb.org/3';
@@ -38,7 +38,7 @@ class TMDbService {
     return this.request<WatchProviderResponse>(`/movie/${movieId}/watch/providers`);
   }
 
-  async getAvailableWatchProviders(region: string = 'US'): Promise<WatchProvider[]> {
+  async getAvailableWatchProviders(_region: string = 'US'): Promise<WatchProvider[]> {
     const response = await this.request<WatchProvidersListResponse>('/watch/providers/movie');
     return response.results
       .filter(provider => provider.display_priority <= 30) // Only show major providers

@@ -1,13 +1,20 @@
 {
   "name": "movie-picker",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "homepage": "https://christian-munoz-rdz.github.io/pickerboxd",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:staging": "vite build --mode staging",
+    "build:production": "vite build --mode production",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
+    "deploy:staging": "npm run build:staging && gh-pages -d dist -b gh-pages-staging",
+    "deploy:production": "npm run build:production && gh-pages -d dist"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.0.2",
@@ -30,10 +37,11 @@
     "eslint": "^8.45.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
+    "gh-pages": "^6.3.0",
     "postcss": "^8.4.27",
     "tailwindcss": "^3.3.3",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.0.2",
-    "vite": "^4.4.5"
+    "vite": "^7.0.6"
   }
 }
