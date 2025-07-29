@@ -28,4 +28,26 @@ export interface MovieResponse {
 
 export interface GenreResponse {
   genres: Genre[];
+}
+
+export interface WatchProvider {
+  logo_path: string;
+  provider_id: number;
+  provider_name: string;
+  display_priority: number;
+}
+
+export interface WatchProviderResponse {
+  results: {
+    [countryCode: string]: {
+      link: string;
+      flatrate?: WatchProvider[];
+      rent?: WatchProvider[];
+      buy?: WatchProvider[];
+    };
+  };
+}
+
+export interface WatchProvidersListResponse {
+  results: WatchProvider[];
 } 

@@ -1,4 +1,4 @@
-import { Movie, MovieResponse, Genre, GenreResponse } from '@/types/movie';
+import { Movie, MovieResponse, Genre, GenreResponse, WatchProvider, WatchProviderResponse, WatchProvidersListResponse } from '@/types/movie';
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const BASE_URL = import.meta.env.VITE_TMDB_BASE_URL || 'https://api.themoviedb.org/3';
@@ -34,25 +34,25 @@ class TMDbService {
     return this.request<MovieResponse>(endpoint);
   }
 
-  async getPopularMovies(page: number = 1): Promise<MovieResponse> {
-    return this.request<MovieResponse>(`/movie/popular?page=${page}`);
+  async getMovieWatchProviders(movieId: number): Promise<WatchProviderResponse> {
+    return this.request<WatchProviderResponse>(`/movie/${movieId}/watch/providers`);
   }
 
-  async getTopRatedMovies(page: number = 1): Promise<MovieResponse> {
-    return this.request<MovieResponse>(`/movie/top_rated?page=${page}`);
+  async getAvailableWatchProviders(region: string = 'US'): Promise<WatchProvider[]> {
+    const response = await this.request<WatchProvidersListResponse>('/watch/providers/movie');
+    return response.results
+      .filter(provider => provider.display_priority <= 30) // Only show major providers
+      .sort((a, b) => a.display_priority - b.display_priority);
   }
 
-  async getNowPlayingMovies(page: number = 1): Promise<MovieResponse> {
-    return this.request<MovieResponse>(`/movie/now_playing?page=${page}`);
-  }
-
-  async getUpcomingMovies(page: number = 1): Promise<MovieResponse> {
-    return this.request<MovieResponse>(`/movie/upcoming?page=${page}`);
-  }
-
-  async getGenres(): Promise<Genre[]> {
-    const response = await this.request<GenreResponse>('/genre/movie/list');
-    return response.genres;
+  async discoverMoviesByProvider(
+    providerId: number,
+    page: number = 1,
+    region: string = 'US'
+  ): Promise<MovieResponse> {
+    return this.request<MovieResponse>(
+      `/discover/movie?with_watch_providers=${providerId}&watch_region=${region}&page=${page}`
+    );
   }
 
   async discoverMovies(options: {
@@ -89,6 +89,27 @@ class TMDbService {
     }
 
     return this.request<MovieResponse>(endpoint);
+  }
+
+  async getPopularMovies(page: number = 1): Promise<MovieResponse> {
+    return this.request<MovieResponse>(`/movie/popular?page=${page}`);
+  }
+
+  async getTopRatedMovies(page: number = 1): Promise<MovieResponse> {
+    return this.request<MovieResponse>(`/movie/top_rated?page=${page}`);
+  }
+
+  async getNowPlayingMovies(page: number = 1): Promise<MovieResponse> {
+    return this.request<MovieResponse>(`/movie/now_playing?page=${page}`);
+  }
+
+  async getUpcomingMovies(page: number = 1): Promise<MovieResponse> {
+    return this.request<MovieResponse>(`/movie/upcoming?page=${page}`);
+  }
+
+  async getGenres(): Promise<Genre[]> {
+    const response = await this.request<GenreResponse>('/genre/movie/list');
+    return response.genres;
   }
 
   getImageUrl(path: string | null, size: string = 'w500'): string {

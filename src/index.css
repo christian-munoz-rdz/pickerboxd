@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    /* Light theme colors */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -24,9 +25,20 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+
+    /* Custom theme variables */
+    --gradient-from: 221.2 83.2% 53.3%;
+    --gradient-to: 262.1 83.3% 57.8%;
+    
+    /* Image filters for light mode */
+    --image-grayscale: 0;
+    --image-opacity: 100%;
+    --image-contrast: 100%;
+    --image-brightness: 100%;
   }
 
   .dark {
+    /* Dark theme colors */
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
     --card: 222.2 84% 4.9%;
@@ -46,14 +58,101 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 94.1%;
+
+    /* Custom dark theme variables */
+    --gradient-from: 217.2 91.2% 59.8%;
+    --gradient-to: 262.1 83.3% 67.8%;
+    
+    /* Image filters for dark mode - reduce brightness and increase contrast */
+    --image-grayscale: 20%;
+    --image-opacity: 85%;
+    --image-contrast: 110%;
+    --image-brightness: 80%;
+  }
+
+  /* Smooth transitions */
+  * {
+    @apply border-border;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Enhanced image handling in dark mode */
+  img:not([data-no-filter]),
+  video:not([data-no-filter]) {
+    filter: grayscale(var(--image-grayscale)) 
+            opacity(var(--image-opacity))
+            contrast(var(--image-contrast))
+            brightness(var(--image-brightness));
+    transition: filter 0.3s ease;
+  }
+
+  /* Special handling for logos and icons */
+  img[data-logo],
+  img[data-icon] {
+    filter: none;
+  }
+
+  /* Dark mode specific enhancements */
+  .dark img[data-logo] {
+    filter: brightness(0.9) contrast(1.1);
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-secondary;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-foreground;
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+/* Additional utility classes */
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+/* Enhanced gradient text for dark mode */
+.gradient-text {
+  background: linear-gradient(135deg, hsl(var(--gradient-from)), hsl(var(--gradient-to)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Movie card hover effects */
+.movie-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.movie-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.dark .movie-card:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
 } 

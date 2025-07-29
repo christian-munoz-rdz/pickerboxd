@@ -3,12 +3,14 @@ import { Movie, Genre } from '@/types/movie';
 import { ParsedLetterboxdMovie } from '@/types/letterboxd';
 import { tmdbService } from '@/services/tmdb';
 import { LetterboxdService } from '@/services/letterboxd';
+import { LetterboxdStorageService } from '@/services/letterboxdStorage';
 import { MovieCard } from './MovieCard';
 import { LetterboxdMovieCard } from './LetterboxdMovieCard';
+import { DarkModeToggle } from './DarkModeToggle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Shuffle, Filter, Loader2, Upload, Film, List } from 'lucide-react';
+import { Shuffle, Filter, Loader2, Upload, Film, List, Download, Trash2, Database, FileText } from 'lucide-react';
 
 interface Filters {
   genres: number[];
@@ -33,6 +35,7 @@ export function MoviePicker() {
 
   useEffect(() => {
     loadGenres();
+    loadStoredLetterboxdData();
   }, []);
 
   const loadGenres = async () => {
@@ -44,6 +47,21 @@ export function MoviePicker() {
     }
   };
 
+  const loadStoredLetterboxdData = () => {
+    try {
+      const storedMovies = LetterboxdStorageService.loadMovies();
+      if (storedMovies && storedMovies.length > 0) {
+        setLetterboxdMovies(storedMovies);
+        // Auto-switch to Letterboxd if data is available
+        if (storedMovies.length > 0) {
+          setMovieSource('letterboxd');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load stored Letterboxd data:', error);
+    }
+  };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -52,6 +70,10 @@ export function MoviePicker() {
     try {
       const movies = await LetterboxdService.parseFile(file);
       setLetterboxdMovies(movies);
+      
+      // Save to browser storage
+      LetterboxdStorageService.saveMovies(movies, file.name);
+      
       setMovieSource('letterboxd');
       setCurrentMovie(null);
       setCurrentLetterboxdMovie(null);
@@ -136,21 +158,56 @@ export function MoviePicker() {
     });
   };
 
+  const clearStoredData = () => {
+    if (confirm('Are you sure you want to clear all stored Letterboxd data? This cannot be undone.')) {
+      LetterboxdStorageService.clearData();
+      setLetterboxdMovies([]);
+      setCurrentLetterboxdMovie(null);
+      setMovieSource('tmdb');
+    }
+  };
+
+  const exportToCSV = () => {
+    if (letterboxdMovies.length === 0) {
+      alert('No Letterboxd data to export.');
+      return;
+    }
+    LetterboxdStorageService.exportToCSV(letterboxdMovies, 'my_letterboxd_movies');
+  };
+
+  const exportToJSON = () => {
+    if (letterboxdMovies.length === 0) {
+      alert('No Letterboxd data to export.');
+      return;
+    }
+    LetterboxdStorageService.exportToJSON(letterboxdMovies, 'my_letterboxd_movies');
+  };
+
+  const metadata = LetterboxdStorageService.getMetadata();
+  const hasStoredData = LetterboxdStorageService.hasStoredData();
+  const storageSize = LetterboxdStorageService.getStorageSize();
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          🎬 Random Movie Picker
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          Discover your next favorite movie with a single click!
-        </p>
+      {/* Header with Dark Mode Toggle */}
+      <div className="flex justify-between items-center mb-8">
+        <div className="text-center flex-1">
+          <h1 className="text-4xl font-bold mb-4 gradient-text">
+            🎬 Random Movie Picker
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Discover your next favorite movie with a single click!
+          </p>
+        </div>
+        <div className="ml-4">
+          <DarkModeToggle />
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Filters Sidebar */}
+        {/* Source Selection */}
         <div className="lg:w-1/3">
-          <Card className="mb-6">
+          <Card>
             <CardHeader>
               <CardTitle>Movie Source</CardTitle>
               <CardDescription>Choose where to pick movies from</CardDescription>
@@ -172,28 +229,85 @@ export function MoviePicker() {
                 >
                   <List className="w-4 h-4" />
                   Letterboxd
+                  {hasStoredData && <Database className="w-3 h-3 text-green-500" />}
                 </Button>
               </div>
 
               {movieSource === 'letterboxd' && (
-                <div className="mt-4">
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="letterboxd-file"
-                  />
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => document.getElementById('letterboxd-file')?.click()}
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Letterboxd CSV
-                  </Button>
+                <div className="mt-4 space-y-4">
+                  {/* File Upload */}
+                  <div>
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="letterboxd-file"
+                    />
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => document.getElementById('letterboxd-file')?.click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {hasStoredData ? 'Replace CSV Data' : 'Upload Letterboxd CSV'}
+                    </Button>
+                  </div>
+
+                  {/* Stored Data Info */}
+                  {hasStoredData && metadata && (
+                    <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-2">
+                      <div className="flex items-center gap-2 font-medium">
+                        <Database className="w-4 h-4 text-green-500" />
+                        Stored Data Available
+                      </div>
+                      <div className="space-y-1 text-muted-foreground">
+                        <div>Movies: {metadata.totalMovies}</div>
+                        <div>File: {metadata.fileName}</div>
+                        <div>Uploaded: {new Date(metadata.uploadDate).toLocaleDateString()}</div>
+                        <div>Size: {storageSize}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Data Management */}
                   {letterboxdMovies.length > 0 && (
-                    <p className="text-sm text-muted-foreground mt-2">
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">Data Management</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={exportToCSV}
+                          className="text-xs"
+                        >
+                          <Download className="w-3 h-3 mr-1" />
+                          CSV
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={exportToJSON}
+                          className="text-xs"
+                        >
+                          <FileText className="w-3 h-3 mr-1" />
+                          JSON
+                        </Button>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={clearStoredData}
+                        className="w-full text-xs"
+                      >
+                        <Trash2 className="w-3 h-3 mr-1" />
+                        Clear Stored Data
+                      </Button>
+                    </div>
+                  )}
+
+                  {letterboxdMovies.length > 0 && (
+                    <p className="text-sm text-muted-foreground">
                       {letterboxdMovies.length} movies loaded
                     </p>
                   )}
@@ -203,7 +317,7 @@ export function MoviePicker() {
           </Card>
 
           {movieSource === 'tmdb' && (
-            <Card>
+            <Card className="mt-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Filter className="w-5 h-5" />
@@ -300,8 +414,17 @@ export function MoviePicker() {
             )}
           </Button>
 
-          {currentMovie && <MovieCard movie={currentMovie} genres={genres} />}
-          {currentLetterboxdMovie && <LetterboxdMovieCard movie={currentLetterboxdMovie} />}
+          {currentMovie && (
+            <div className="movie-card">
+              <MovieCard movie={currentMovie} genres={genres} />
+            </div>
+          )}
+          
+          {currentLetterboxdMovie && (
+            <div className="movie-card">
+              <LetterboxdMovieCard movie={currentLetterboxdMovie} />
+            </div>
+          )}
 
           {!currentMovie && !currentLetterboxdMovie && !loading && (
             <Card className="w-full max-w-md">
@@ -310,7 +433,7 @@ export function MoviePicker() {
                 <h3 className="text-xl font-semibold mb-2">Ready to Discover?</h3>
                 {movieSource === 'letterboxd' && letterboxdMovies.length === 0 ? (
                   <p className="text-muted-foreground text-center">
-                    Upload your Letterboxd CSV export to get started!
+                    {hasStoredData ? 'Click "Pick Random Movie" to get started!' : 'Upload your Letterboxd CSV export to get started!'}
                   </p>
                 ) : (
                   <p className="text-muted-foreground text-center">

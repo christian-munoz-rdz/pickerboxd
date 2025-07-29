@@ -53,7 +53,7 @@ export class LetterboxdService {
         return {
           ...movie,
           tmdbId: tmdbMovie.id,
-          posterPath: tmdbMovie.poster_path
+          posterPath: tmdbMovie.poster_path || undefined
         };
       }
     } catch (error) {

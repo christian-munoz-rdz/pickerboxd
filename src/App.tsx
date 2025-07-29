@@ -1,11 +1,14 @@
+import { ThemeProvider } from './contexts/ThemeContext'
 import { MoviePicker } from './components/MoviePicker'
 import './App.css'
 
 function App() {
   return (
-    <div className="min-h-screen bg-background">
-      <MoviePicker />
-    </div>
+    <ThemeProvider>
+      <div className="min-h-screen bg-background transition-colors duration-300">
+        <MoviePicker />
+      </div>
+    </ThemeProvider>
   )
 }
 

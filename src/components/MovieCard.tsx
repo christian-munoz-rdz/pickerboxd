@@ -14,7 +14,7 @@ export function MovieCard({ movie, genres }: MovieCardProps) {
   const releaseYear = new Date(movie.release_date).getFullYear();
   
   return (
-    <Card className="w-full max-w-md mx-auto overflow-hidden transition-transform hover:scale-105">
+    <Card className="w-full max-w-md mx-auto overflow-hidden movie-card">
       <div className="relative">
         <img
           src={tmdbService.getImageUrl(movie.poster_path)}
@@ -25,7 +25,7 @@ export function MovieCard({ movie, genres }: MovieCardProps) {
             target.src = '/placeholder-movie.jpg';
           }}
         />
-        <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-md flex items-center gap-1">
+        <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-md flex items-center gap-1 backdrop-blur-sm">
           <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
           <span className="text-sm font-medium">{movie.vote_average.toFixed(1)}</span>
         </div>
